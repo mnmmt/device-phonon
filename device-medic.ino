@@ -25,15 +25,20 @@ int values[2] = {0, 0};
 int values_previous[2] = {0, 0};
 int value_frame[2] = {0, 0};
 
+int knob_buttons_source[2] = {PIN_F5, PIN_F4};
 int knob_buttons[2] = {0, 0};
 int knob_buttons_previous[2] = {0, 0};
 
+int buttons_source[2] = {PIN_F6, PIN_B6};
+int buttons_leds[2] = {PIN_F7, PIN_B5};
 int buttons[2] = {0, 0};
 int buttons_previous[2] = {0, 0};
 
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(PIXELS * RINGS, PIXPIN, NEO_GRB + NEO_KHZ800);
-Encoder enc_one(PIN_D0, PIN_D1);
-Encoder enc_two(PIN_D2, PIN_D3);
+Encoder encoders[2] = {
+  Encoder(PIN_D0, PIN_D1),
+  Encoder(PIN_D2, PIN_D3)
+};
 
 void setup() {
   pinMode(PIXPIN, OUTPUT);
@@ -54,10 +59,8 @@ void setup() {
 }
 
 void loop() {
-  values[0] = enc_one.read();
-  values[1] = enc_two.read();
-  
   for (int i=0; i<2; i++) {
+    values[i] = encoders[i].read();
     // check knob values
     if (values_previous[i] / 4 != values[i] / 4) {
       // check for fast Without pushbutton code
@@ -91,7 +94,7 @@ void loop() {
     encoders[i].write(values[i]);
     
     // check button values
-    knob_buttons[i] = digitalRead(i ? PIN_F4 : PIN_F5);
+    knob_buttons[i] = digitalRead(knob_buttons_source[i]);
     if (knob_buttons_previous[i] != knob_buttons[i]) {
       knob_buttons_previous[i] = knob_buttons[i];
       usbMIDI.sendControlChange(2, (1 - knob_buttons_previous[i]) * 127, MIDI_CHANNEL);
@@ -99,9 +102,9 @@ void loop() {
   }
   
   for (int i=0; i<1; i++) {
-    int button_state = !digitalRead(i ? PIN_B6 : PIN_F6);
+    int button_state = !digitalRead(buttons_source[i]);
     if (button_state != buttons_previous[i]) {
-      digitalWrite(i ? PIN_B5 : PIN_F7, button_state);
+      digitalWrite(buttons_leds[i], button_state);
       if (button_state) {
         usbMIDI.sendNoteOn(i + 1, 127, MIDI_CHANNEL);
       } else {
@@ -110,9 +113,6 @@ void loop() {
       buttons_previous[i] = button_state;
     }
   }
-  
-  enc_one.write(values[0]);
-  enc_two.write(values[1]);
   
   delay(1);
   frame += 1;
