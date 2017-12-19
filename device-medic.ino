@@ -74,6 +74,8 @@ void loop() {
         mult = 8;
       }
       values[i] = values_previous[i] + (diff * mult);
+      values[i] = values[i] < 0 ? 0 : values[i];
+      values[i] = values[i] > 511 ? 511: values[i];
       value_frame[i] = frame;
       // send new value
       values_previous[i] = values[i];
@@ -85,7 +87,8 @@ void loop() {
       }
       pixels.show();
     }
-    values[i] = constrain(values[i], 0, 511);
+    
+    encoders[i].write(values[i]);
     
     // check button values
     knob_buttons[i] = digitalRead(i ? PIN_F4 : PIN_F5);
