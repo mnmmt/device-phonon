@@ -48,7 +48,7 @@ void setup() {
   // flash LED to indicate startup
   pinMode(LED, OUTPUT);
   for (int i=0; i<6; i++) {  
-    digitalWrite(LED, i%2 ? HIGH : LOW);
+    digitalWrite(LED, i % 2 ? HIGH : LOW);
     delay(250);
   }
 }
@@ -82,7 +82,7 @@ void loop() {
       usbMIDI.sendControlChange(i + 1, values_previous[i] / 4, MIDI_CHANNEL);
       int offset = i * PIXELS;
       for (int l=0; l < PIXELS; l++) {
-        int remainder = min(max((values_previous[i])/4 - l * 8, 0), 8);
+        int remainder = min(max((values_previous[i]) / 4 - l * 8, 0), 8);
         pixels.setPixelColor((PIXELS - 1 - l) + offset, pixels.Color(0, remainder, 0));
       }
       pixels.show();
