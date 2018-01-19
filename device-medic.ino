@@ -104,10 +104,10 @@ void loop() {
     }
   }
   
-  for (int i=0; i<1; i++) {
+  for (int i=0; i<2; i++) {
     int button_state = !digitalRead(buttons_source[i]);
     if (button_state != buttons_previous[i]) {
-      digitalWrite(buttons_leds[i], button_state);
+      // digitalWrite(buttons_leds[i], button_state);
       if (button_state) {
         usbMIDI.sendNoteOn(i + 1, 127, MIDI_CHANNEL);
       } else {
