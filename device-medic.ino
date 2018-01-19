@@ -40,6 +40,15 @@ Encoder encoders[2] = {
   Encoder(PIN_D2, PIN_D3)
 };
 
+int colors[6] = {
+  pixels.Color(0, 1, 0),
+  pixels.Color(0, 0, 1),
+  pixels.Color(0, 1, 1),
+  pixels.Color(1, 1, 0),
+  pixels.Color(1, 0, 0),
+  pixels.Color(1, 0, 1),
+};
+
 void setup() {
   pinMode(PIXPIN, OUTPUT);
   pinMode(PIN_F4, INPUT_PULLUP);
@@ -89,7 +98,7 @@ void loop() {
       int offset = (!i) * PIXELS;
       for (int l=0; l < PIXELS; l++) {
         int remainder = min(max((values_previous[i]) / 4 - l * 8, 0), 8);
-        pixels.setPixelColor((PIXELS - 1 - l) + offset, pixels.Color(0, remainder, 0));
+        pixels.setPixelColor((PIXELS - 1 - l) + offset, remainder * colors[i]);
       }
       pixels.show();
     }
