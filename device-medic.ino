@@ -117,6 +117,36 @@ void loop() {
     }
   }
   
+  // check if there is any incoming MIDI data
+  if (usbMIDI.read()) {
+    int type = usbMIDI.getType();
+    int channel = usbMIDI.getChannel();
+    if (channel == MIDI_CHANNEL) {
+      if (type == 1) {
+          int note = usbMIDI.getData1();
+          int velocity = usbMIDI.getData2();
+          if (note == 1 || note == 2) {
+            digitalWrite(buttons_leds[note - 1], 1);
+	  }
+        } else if (type == 0) {
+          int note = usbMIDI.getData1();
+          int velocity = usbMIDI.getData2();
+          if (note == 1 || note == 2) {
+            digitalWrite(buttons_leds[note - 1], 0);
+	  }
+        } else if (type == 3) {
+          int controller = usbMIDI.getData1();
+          int value = usbMIDI.getData2();
+          if (controller == 0 || controller == 1) {
+            // TODO: set value
+	  }
+        } else {
+          int d1 = usbMIDI.getData1();
+	  int d2 = usbMIDI.getData2();
+        }
+      }
+  }
+  
   delay(1);
   frame += 1;
 }
