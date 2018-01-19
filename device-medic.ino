@@ -100,7 +100,7 @@ void loop() {
     knob_buttons[i] = digitalRead(knob_buttons_source[i]);
     if (knob_buttons_previous[i] != knob_buttons[i]) {
       knob_buttons_previous[i] = knob_buttons[i];
-      usbMIDI.sendControlChange(2, (1 - knob_buttons_previous[i]) * 127, MIDI_CHANNEL);
+      //usbMIDI.sendControlChange(2 + i, (1 - knob_buttons_previous[i]) * 127, MIDI_CHANNEL);
     }
   }
   
