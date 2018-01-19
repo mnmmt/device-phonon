@@ -86,7 +86,7 @@ void loop() {
       // send new value
       values_previous[i] = values[i];
       usbMIDI.sendControlChange(i + 1, values_previous[i] / 4, MIDI_CHANNEL);
-      int offset = i * PIXELS;
+      int offset = (!i) * PIXELS;
       for (int l=0; l < PIXELS; l++) {
         int remainder = min(max((values_previous[i]) / 4 - l * 8, 0), 8);
         pixels.setPixelColor((PIXELS - 1 - l) + offset, pixels.Color(0, remainder, 0));
