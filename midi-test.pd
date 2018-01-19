@@ -1,0 +1,97 @@
+#N canvas 1190 333 450 300 10;
+#X obj 38 15 hsl 128 15 0 127 0 0 ctl/1 ctl-in/1 empty -2 -8 0 10 -262144
+-1 -1 300 1;
+#X obj 38 35 hsl 128 15 0 127 0 0 ctl/2 ctl-in/2 empty -2 -8 0 10 -262144
+-1 -1 5800 1;
+#X obj 38 55 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 0 1;
+#X obj 38 75 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 0 1;
+#X obj 38 95 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 0 1;
+#X obj 38 115 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 0 1;
+#X obj 38 135 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 0 1;
+#X obj 38 155 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 0 1;
+#X obj 11 15 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0 1
+;
+#X obj 11 35 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0 1
+;
+#X obj 11 55 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0 1
+;
+#X obj 11 75 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0 1
+;
+#X obj 11 95 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0 1
+;
+#X obj 11 115 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 11 135 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 11 155 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 232 15 tgl 15 0 empty button/1 empty 17 7 0 10 -262144 -1 -1
+0 1;
+#X obj 232 30 tgl 15 0 led/1 empty empty 17 7 0 10 -228856 -1 -1 0
+127;
+#X obj 302 15 tgl 15 0 empty button/2 empty 17 7 0 10 -262144 -1 -1
+0 1;
+#X obj 302 30 tgl 15 0 led/2 empty empty 17 7 0 10 -228856 -1 -1 0
+127;
+#N canvas 572 146 450 300 connections 1;
+#X obj 186 223 list append;
+#X obj 186 267 print;
+#X obj 186 201 midirealtimein;
+#X obj 186 245 list prepend realtime;
+#X obj 326 223 list append;
+#X obj 326 267 print;
+#X obj 326 201 midiclkin;
+#X obj 326 245 list prepend clock;
+#X obj 12 221 ctlin;
+#X obj 12 243 pack f f f;
+#X obj 12 265 print ctlin;
+#X obj 98 222 notein;
+#X obj 98 244 pack f f f;
+#X obj 98 266 print notein;
+#X obj 127 80 noteout;
+#X obj 24 21 notein 1;
+#X obj 24 45 pack f f;
+#X msg 24 67 \; button/\$1 \$2;
+#X obj 127 21 r led/1;
+#X obj 206 21 r led/2;
+#X obj 210 85 print;
+#X obj 320 135 pack f f;
+#X msg 320 157 \; ctl-in/\$2 \$1;
+#X obj 320 94 ctlin;
+#X msg 127 45 1 \$1 1;
+#X msg 205 45 2 \$1 1;
+#X connect 0 0 3 0;
+#X connect 2 0 0 0;
+#X connect 2 1 0 1;
+#X connect 3 0 1 0;
+#X connect 4 0 7 0;
+#X connect 6 0 4 0;
+#X connect 6 1 4 1;
+#X connect 7 0 5 0;
+#X connect 8 0 9 0;
+#X connect 8 1 9 1;
+#X connect 8 2 9 2;
+#X connect 9 0 10 0;
+#X connect 11 0 12 0;
+#X connect 11 1 12 1;
+#X connect 11 2 12 2;
+#X connect 12 0 13 0;
+#X connect 15 0 16 0;
+#X connect 15 1 16 1;
+#X connect 16 0 17 0;
+#X connect 18 0 24 0;
+#X connect 19 0 25 0;
+#X connect 21 0 22 0;
+#X connect 23 0 21 0;
+#X connect 23 1 21 1;
+#X connect 24 0 14 0;
+#X connect 24 0 20 0;
+#X connect 25 0 14 0;
+#X connect 25 0 20 0;
+#X restore 349 82 pd connections;

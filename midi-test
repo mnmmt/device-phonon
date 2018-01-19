@@ -1,0 +1,10 @@
+#~/bin/sh
+
+if [ "$1" = "" ]
+then
+  echo Usage: `basename $0` DEVICE-MIDI-NAME
+  echo e.g. `basename $0` medic
+else
+  ( sleep 2; while [ "`pgrep -f $0.pd`" != "" ]; do sleep 2 && aconnect "$1":0 "Pure Data":0; aconnect "Pure Data":0 "$1":0; done ) &
+  pd $0.pd
+fi
