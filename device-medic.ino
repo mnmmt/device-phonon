@@ -45,8 +45,11 @@ void setup() {
   pinMode(PIN_F4, INPUT_PULLUP);
   pinMode(PIN_F5, INPUT_PULLUP);
   
-  pinMode(PIN_F6, INPUT_PULLUP); 
-  pinMode(PIN_F7, OUTPUT);
+  for (int i=0; i<2; i++) {
+    pinMode(knob_buttons_source[i], INPUT_PULLUP);
+    pinMode(buttons_source[i], INPUT_PULLUP);
+    pinMode(buttons_leds[i], OUTPUT);
+  }
   
   pixels.begin();
   
