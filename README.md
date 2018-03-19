@@ -1,1 +1,1 @@
-![Medic schematic](./medic-schematic.svg)
+Tiny single-virtual-midi-knob controller for Teensy LC.
