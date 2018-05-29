@@ -9,20 +9,33 @@
 
 #define MIDI_CHANNEL 1
 
-#define NUM_VIRTUAL 127
+// how many changes to collect
+#define RING 32
+// 5 milliseconds
+#define RECENT 5
 
 int frame = 0;
-
-int value_virtual_knobs[1] = {0};
-int selected = 0;
 int last = 0;
-int lastTime = 0;
+int val = 0;
+int ringbuffer_v[RING];
+unsigned long ringbuffer_t[RING];
+int ringpos = 0;
+int pins[] = {0, 0};
+unsigned long lastInterrupt = 0;
 
-Encoder knob = Encoder(2, 4);
+// Encoder knob = Encoder(2,4);
 
 void setup() {
-  pinMode(3, OUTPUT_OPENDRAIN);
+  // init buffer
+  for (int i=0; i<RING; i++) {
+    ringbuffer_v[i] = 0;
+    ringbuffer_t[i] = 0;
+  }
 
+  //pinMode(3, OUTPUT_OPENDRAIN);
+  pinMode(3, OUTPUT);
+  digitalWrite(3, LOW);
+  
   // flash LED to indicate startup
   pinMode(LED, OUTPUT);
   for (int i=0; i<6; i++) {
@@ -30,60 +43,106 @@ void setup() {
     delay(250);
   }
   
+  pinMode(2, INPUT_PULLUP);
+  pinMode(4, INPUT_PULLUP);
+  //pinMode(pushPin, INPUT);
+  
+  attachInterrupt(digitalPinToInterrupt(2), ISRrotAChange, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(4), ISRrotBChange, CHANGE);
+  
+  lastInterrupt = millis();
   //knob.write(64);
   
   //Serial.begin(9600);
-  //Serial.println("Hello World...");
+  //Serial.println("Booted.");
+}
+
+int gray_decode(int n) {
+    int p = n;
+    while (n >>= 1) p ^= n;
+    return p;
 }
 
 void loop() {
-  int raw = knob.read();
-  //knob.write(64);
-  
-  if (raw != last) {
-    if (lastTime - millis() > 20) {
-      int previous_value = value_virtual_knobs[selected];
-      value_virtual_knobs[selected] -= raw - last;
-      if (value_virtual_knobs[selected] > 127) {
-        value_virtual_knobs[selected] = 127;
-      }
-      if (value_virtual_knobs[selected] < 0) {
-        value_virtual_knobs[selected] = 0;
-      }
-      if (previous_value !=  value_virtual_knobs[selected]) {
-        usbMIDI.sendControlChange(selected + 1, value_virtual_knobs[selected], MIDI_CHANNEL);
-      }
-      lastTime = millis();
-    }
-    last = raw;
+  if (last != val) {
+    last = val;
+    usbMIDI.sendControlChange(1, val, MIDI_CHANNEL);
   }
-  
-  //knob.write(64);
-  
-  // check if there is any incoming MIDI data
-  /*if (usbMIDI.read()) {
-    int type = usbMIDI.getType();
-    int channel = usbMIDI.getChannel();
-    if (channel == MIDI_CHANNEL) {
-      if (type == 1) {
-          int note = usbMIDI.getData1();
-          int velocity = usbMIDI.getData2();
-        } else if (type == 0) {
-          int note = usbMIDI.getData1();
-          int velocity = usbMIDI.getData2();
-        } else if (type == 3) {
-          int controller = usbMIDI.getData1();
-          int value = usbMIDI.getData2();
-          if (controller >= 0 && controller < NUM_VIRTUAL) {
-            value_virtual_knobs[controller] = value;
-	  }
-        } else {
-          int d1 = usbMIDI.getData1();
-	  int d2 = usbMIDI.getData2();
-        }
-      }
-  }*/
-  
-  //delay(20);
-  //frame += 1;
+    
+  delay(10);
+  frame += 1;
 }
+
+int previous(int lookup) {
+  return (((lookup - 1) % RING) + RING) % RING;
+}
+
+// lol this is awful
+int diff(int lookup) {
+  int v1 = ringbuffer_v[lookup];
+  int v2 = ringbuffer_v[previous(lookup)];
+  for (int i = 0; i<4; i++) {
+    if (v1 == i && v2 == ((i + 1) % 4)) {
+      return 1;
+    }
+    if (v2 == i && v1 == ((i + 1) % 4)) {
+      return -1;
+    }
+  }
+  return 0;
+}
+
+int compute_change(int lookup) {
+  unsigned long now = millis();
+  int c = diff(lookup);
+  int up = 0;
+  int down = 0;
+  for (int i=0; i<RING; i++) {
+    int timediff = now - ringbuffer_t[((lookup + i) % RING)];
+    // only consider recent changes
+    if (timediff < RECENT && timediff != 0) {
+      int o = diff(lookup);
+      if (o == 1) {
+        up++;
+      }
+      if (o == -1) {
+      	down++;
+      }
+    }
+  }
+  if (up || down) {
+    if (up > down) {
+      return 1;
+    }
+    if (up < down) {
+      return -1;
+    }
+  }
+  return c;
+}
+
+int updateval(int *pins) {
+  int lookup = ringpos % RING;
+  ringbuffer_v[lookup] = gray_decode(pins[0] | (pins[1] << 1));;
+  ringbuffer_t[lookup] = millis();
+  int change = compute_change(lookup);
+  ringpos++;
+  return change;
+}
+
+void sendmidi() {
+  val = constrain(val - updateval(pins), 0, 127);
+  // usbMIDI.sendControlChange(1, val, MIDI_CHANNEL);
+}
+
+// Interrupt routines
+void ISRrotAChange() {
+  pins[0] = digitalRead(2);
+  sendmidi();
+}
+
+void ISRrotBChange() {
+  pins[1] = digitalRead(4);
+  sendmidi();
+}
+
