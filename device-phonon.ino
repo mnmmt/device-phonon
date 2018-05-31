@@ -15,14 +15,21 @@
 #define RECENT 5
 
 int frame = 0;
-int last = 0;
-int val = 0;
-float weighted = 0.0;
+int last[4] = {0, 0, 0, 0};
+int val[4] = {0, 0, 0, 0};
+float weighted[4] = {0.0, 0.0, 0.0, 0.0};
+int toggles[4] = {0, 0, 0, 0};
+
 int ringbuffer_v[RING];
 unsigned long ringbuffer_t[RING];
 int ringpos = 0;
-int pins[] = {0, 0};
-unsigned long lastInterrupt = 0;
+
+int pins[2] = {0, 0};
+int buttons[4] = {8, 10, 21, 16};
+int pulls[4] = {6, 12, 23, 19};
+int selected = 0;
+
+// pin 14 is audio trigger
 
 // Encoder knob = Encoder(2,4);
 
@@ -36,12 +43,12 @@ void setup() {
   //pinMode(3, OUTPUT_OPENDRAIN);
   pinMode(3, OUTPUT);
   digitalWrite(3, LOW);
-  
-  // flash LED to indicate startup
-  pinMode(LED, OUTPUT);
-  for (int i=0; i<6; i++) {
-    digitalWrite(LED, i % 2 ? HIGH : LOW);
-    delay(250);
+
+  // button reference to low
+  for (int i=0; i<4; i++) {
+    pinMode(pulls[i], OUTPUT);
+    digitalWrite(pulls[i], LOW);
+    pinMode(buttons[i], INPUT_PULLUP);
   }
   
   pinMode(2, INPUT_PULLUP);
@@ -51,20 +58,39 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(2), ISRrotAChange, CHANGE);
   attachInterrupt(digitalPinToInterrupt(4), ISRrotBChange, CHANGE);
   
-  lastInterrupt = millis();
   //knob.write(64);
   
   //Serial.begin(9600);
   //Serial.println("Booted.");
+  
+  // flash LED to indicate startup
+  pinMode(LED, OUTPUT);
+  for (int i=0; i<6; i++) {
+    digitalWrite(LED, i % 2 ? HIGH : LOW);
+    delay(250);
+  }
 }
 
 void loop() {
-  weighted += (val - weighted) / 8.0;
-  if (last != round(weighted)) {
-    last = round(weighted);
-    usbMIDI.sendControlChange(1, val, MIDI_CHANNEL);
+  // update selected knob
+  selected = (!digitalRead(buttons[0])) | ((!digitalRead(buttons[1])) << 1);
+
+  weighted[selected] += (val[selected] - weighted[selected]) / 8.0;
+  if (last[selected] != round(weighted[selected])) {
+    last[selected] = round(weighted[selected]);
+    usbMIDI.sendControlChange(selected * 3 + 1, val[selected], MIDI_CHANNEL);
   }
-    
+
+  if (toggles[0] != digitalRead(buttons[2])) {
+    toggles[0] = digitalRead(buttons[2]);
+    usbMIDI.sendControlChange(selected * 3 + 2, !toggles[0], MIDI_CHANNEL);
+  }
+
+  if (toggles[1] != digitalRead(buttons[3])) {
+    toggles[1] = digitalRead(buttons[3]);
+    usbMIDI.sendControlChange(selected * 3 + 3, !toggles[1], MIDI_CHANNEL);
+  }
+
   delay(1);
   frame += 1;
 }
@@ -133,8 +159,7 @@ int updateval(int *pins) {
 }
 
 void sendmidi() {
-  val = constrain(val - updateval(pins), 0, 127);
-  // usbMIDI.sendControlChange(1, val, MIDI_CHANNEL);
+  val[selected] = constrain(val[selected] - updateval(pins), 0, 127);
 }
 
 // Interrupt routines
