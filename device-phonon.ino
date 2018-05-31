@@ -17,6 +17,7 @@
 int frame = 0;
 int last = 0;
 int val = 0;
+float weighted = 0.0;
 int ringbuffer_v[RING];
 unsigned long ringbuffer_t[RING];
 int ringpos = 0;
@@ -57,20 +58,21 @@ void setup() {
   //Serial.println("Booted.");
 }
 
+void loop() {
+  weighted += (val - weighted) / 8.0;
+  if (last != round(weighted)) {
+    last = round(weighted);
+    usbMIDI.sendControlChange(1, val, MIDI_CHANNEL);
+  }
+    
+  delay(1);
+  frame += 1;
+}
+
 int gray_decode(int n) {
     int p = n;
     while (n >>= 1) p ^= n;
     return p;
-}
-
-void loop() {
-  if (last != val) {
-    last = val;
-    usbMIDI.sendControlChange(1, val, MIDI_CHANNEL);
-  }
-    
-  delay(10);
-  frame += 1;
 }
 
 int previous(int lookup) {
