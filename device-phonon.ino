@@ -74,23 +74,26 @@ void setup() {
 void loop() {
   // update selected knob
   selected = (!digitalRead(buttons[0])) | ((!digitalRead(buttons[1])) << 1);
-
+  
   weighted[selected] += (val[selected] - weighted[selected]) / 8.0;
   if (last[selected] != round(weighted[selected])) {
     last[selected] = round(weighted[selected]);
-    usbMIDI.sendControlChange(selected * 3 + 1, val[selected], MIDI_CHANNEL);
+    usbMIDI.sendControlChange(selected * 3, val[selected], MIDI_CHANNEL);
   }
-
-  if (toggles[0] != digitalRead(buttons[2])) {
-    toggles[0] = digitalRead(buttons[2]);
-    usbMIDI.sendControlChange(selected * 3 + 2, !toggles[0], MIDI_CHANNEL);
+  
+  for (int i = 0; i < 4; i++) {
+    if (toggles[i] != digitalRead(buttons[i])) {
+      toggles[i] = digitalRead(buttons[i]);
+      // virtual knob selectors
+      if (i < 2) {
+        usbMIDI.sendControlChange(i + 12, !toggles[i], MIDI_CHANNEL);
+      } else {
+  	// regular buttons ganged to selected
+      	usbMIDI.sendControlChange(selected * 3 + i - 1, !toggles[i], MIDI_CHANNEL);
+      }
+    }
   }
-
-  if (toggles[1] != digitalRead(buttons[3])) {
-    toggles[1] = digitalRead(buttons[3]);
-    usbMIDI.sendControlChange(selected * 3 + 3, !toggles[1], MIDI_CHANNEL);
-  }
-
+  
   delay(1);
   frame += 1;
 }
