@@ -33,6 +33,7 @@ int pins[2] = {0, 0};
 int buttons[4] = {8, 10, 21, 19};
 int pulls[4] = {6, 12, 23, 16};
 int selected = 0;
+int clock_ring[3] = {0, 0, 0};
 
 void setup() {
   // init buffer
@@ -97,6 +98,14 @@ void loop() {
     }
   }
   
+  // check analogue in for clock signal yeh
+  clock_ring[0] = clock_ring[1];
+  clock_ring[1] = clock_ring[2];
+  clock_ring[2] = analogRead(26) > 128;
+  if (clock_ring[0] == 0 && clock_ring[1] == 1 && clock_ring[2] == 1) {
+    usbMIDI.sendRealTime(0xFA);
+  }
+
   delay(1);
   frame += 1;
 }
@@ -111,7 +120,6 @@ int previous(int lookup) {
   return (((lookup - 1) % RING) + RING) % RING;
 }
 
-// lol this is awful
 int diff(int lookup) {
   int v1 = ringbuffer_v[lookup];
   int v2 = ringbuffer_v[previous(lookup)];
