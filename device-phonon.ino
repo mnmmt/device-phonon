@@ -34,6 +34,7 @@ int buttons[4] = {8, 10, 21, 19};
 int pulls[4] = {6, 12, 23, 16};
 int selected = 0;
 int clock_ring[3] = {0, 0, 0};
+unsigned long clock_last = 0;
 
 void setup() {
   // init buffer
@@ -60,7 +61,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(2), ISRrotAChange, CHANGE);
   attachInterrupt(digitalPinToInterrupt(4), ISRrotBChange, CHANGE);
   
-  //knob.write(64);
+  pinMode(26, INPUT_PULLDOWN);
   
   //Serial.begin(9600);
   //Serial.println("Booted.");
@@ -101,9 +102,12 @@ void loop() {
   // check analogue in for clock signal yeh
   clock_ring[0] = clock_ring[1];
   clock_ring[1] = clock_ring[2];
-  clock_ring[2] = analogRead(26) > 128;
+  clock_ring[2] = analogRead(26) > 256;
   if (clock_ring[0] == 0 && clock_ring[1] == 1 && clock_ring[2] == 1) {
-    usbMIDI.sendRealTime(0xFA);
+    if (millis() > clock_last + 25) {
+      usbMIDI.sendRealTime(0xFA);
+    }
+    clock_last = millis();
   }
 
   delay(1);
