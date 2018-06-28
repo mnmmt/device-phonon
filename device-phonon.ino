@@ -30,13 +30,9 @@ unsigned long ringbuffer_t[RING];
 int ringpos = 0;
 
 int pins[2] = {0, 0};
-int buttons[4] = {8, 10, 21, 16};
-int pulls[4] = {6, 12, 23, 19};
+int buttons[4] = {8, 10, 21, 19};
+int pulls[4] = {6, 12, 23, 16};
 int selected = 0;
-
-// pin 14 is audio trigger
-
-// Encoder knob = Encoder(2,4);
 
 void setup() {
   // init buffer
