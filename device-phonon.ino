@@ -82,6 +82,8 @@ void loop() {
     usbMIDI.sendControlChange(selected * 3, val[selected], MIDI_CHANNEL);
   }
   
+  // TODO: buttons can get stuck if "selected" and then pressed
+  // and then "deselected" before release
   for (int i = 0; i < 4; i++) {
     if (toggles[i] != digitalRead(buttons[i])) {
       toggles[i] = digitalRead(buttons[i]);
