@@ -3,7 +3,12 @@
 // http://milkcrate.com.au/_other/downloads/arduino/Teensy_Rotary_Encoder.ino
 // Thanks Seb!
 
-#include <Encoder.h>
+// TODO:
+// * pulses on pin 1 generate midi clock message (default)
+// * incoming midi clock reconfigures pin 14 and sends pulse
+// * incoming midi for knob values
+// * incoming midi for LED
+// * fix stuck buttons issue below
 
 #define LED	13
 
