@@ -35,6 +35,11 @@ int pulls[4] = {6, 12, 23, 16};
 int selected = 0;
 int clock_ring[3] = {0, 0, 0};
 unsigned long clock_last = 0;
+int clock_in = 1;
+int clock_send = 0;
+const uint8_t clock_sysex[3] = {3, 14, 59};
+const uint8_t clock_sysex_2[2] = {99, 97};
+int spp = 0;
 
 void setup() {
   // init buffer
@@ -100,14 +105,60 @@ void loop() {
   }
   
   // check analogue in for clock signal yeh
-  clock_ring[0] = clock_ring[1];
-  clock_ring[1] = clock_ring[2];
-  clock_ring[2] = analogRead(26) > 256;
-  if (clock_ring[0] == 0 && clock_ring[1] == 1 && clock_ring[2] == 1) {
-    if (millis() > clock_last + 25) {
-      usbMIDI.sendRealTime(0xFA);
+  if (clock_in) {
+    clock_ring[0] = clock_ring[1];
+    clock_ring[1] = clock_ring[2];
+    clock_ring[2] = analogRead(26) > 256;
+    if (clock_ring[0] == 0 && clock_ring[1] == 1 && clock_ring[2] == 1) {
+      if (millis() > clock_last + 25) {
+      	// if incoming ticks have been off for a second
+      	// reset the song position pointer
+      	if (millis() > clock_last + 1250) {
+      	  spp = 0;
+	}
+        //usbMIDI.sendRealTime(0xF2);
+        //usbMIDI.sendRealTime(0xF8);
+        //usbMIDI.sendRealTime(0xFD);
+        //usbMIDI.sendSysEx(3, clock_sysex);
+        //usbMIDI.sendSysEx(1, clock_sysex_2);
+        usbMIDI.sendSongPosition(spp);
+        //usbMIDI.sendControlChange(127, spp, MIDI_CHANNEL);
+        spp += 1;
+        //usbMIDI.send(0xf2, 1, 2, MIDI_CHANNEL)
+      }
+      clock_last = millis();
     }
-    clock_last = millis();
+  }
+
+  if (usbMIDI.read()) {
+    int type = usbMIDI.getType();
+    //int channel = usbMIDI.getChannel();
+    //if (channel == MIDI_CHANNEL) {
+      // 8 = all realtime clock messages
+      // 0xF8 = usbMIDI.Clock
+      if (type == 8) {
+        digitalWrite(LED, 1);
+        if (clock_in) {
+          clock_in = 0;
+          pinMode(26, OUTPUT);
+        }
+        clock_send = 4;
+      }
+    //}
+  } else {
+    digitalWrite(LED, 0);
+  }
+
+  // check for clock sends
+  if (clock_send) {
+    if (clock_send > 1) {
+      digitalWrite(26, 1);
+      //analogWrite(26, 255);
+    } else {
+      digitalWrite(26, 0);
+      //analogWrite(26, 0);
+    }
+    clock_send -= 1;
   }
 
   delay(1);
