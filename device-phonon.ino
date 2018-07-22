@@ -136,7 +136,7 @@ void loop() {
     //if (channel == MIDI_CHANNEL) {
       // 8 = all realtime clock messages
       // 0xF8 = usbMIDI.Clock
-      if (type == 8) {
+      if (type == usbMIDI.SongPosition) {
         digitalWrite(LED, 1);
         if (clock_in) {
           clock_in = 0;
