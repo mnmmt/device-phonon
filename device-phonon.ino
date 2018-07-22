@@ -105,7 +105,7 @@ void loop() {
   }
   
   // check analogue in for clock signal yeh
-  if (clock_in) {
+  if (clock_in == 1) {
     clock_ring[0] = clock_ring[1];
     clock_ring[1] = clock_ring[2];
     clock_ring[2] = analogRead(26) > 256;
@@ -150,7 +150,7 @@ void loop() {
   }
 
   // check for clock sends
-  if (clock_send) {
+  if (clock_in == 0 && clock_send) {
     if (clock_send > 1) {
       digitalWrite(26, 1);
       //analogWrite(26, 255);
