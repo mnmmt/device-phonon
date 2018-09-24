@@ -122,7 +122,7 @@ void loop() {
         //usbMIDI.sendSysEx(3, clock_sysex);
         //usbMIDI.sendSysEx(1, clock_sysex_2);
         usbMIDI.sendSongPosition(spp);
-        //usbMIDI.sendControlChange(127, spp, MIDI_CHANNEL);
+        //usbMIDI.sendControlChange(127, spp % 127, MIDI_CHANNEL);
         spp += 1;
         //usbMIDI.send(0xf2, 1, 2, MIDI_CHANNEL)
       }
