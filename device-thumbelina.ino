@@ -96,10 +96,10 @@ void loop() {
       toggles[i] = digitalRead(buttons[i]);
       // virtual knob selectors
       if (i < 2) {
-        usbMIDI.sendControlChange(i + 12, !toggles[i], MIDI_CHANNEL);
+        usbMIDI.sendControlChange(i + 12, (!toggles[i]) * 127, MIDI_CHANNEL);
       } else {
-  	// regular buttons ganged to selected
-      	usbMIDI.sendControlChange(selected * 3 + i - 1, !toggles[i], MIDI_CHANNEL);
+        // regular buttons ganged to selected
+        usbMIDI.sendControlChange(selected * 3 + i - 1, (!toggles[i]) * 127, MIDI_CHANNEL);
       }
     }
   }
