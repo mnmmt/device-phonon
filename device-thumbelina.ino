@@ -41,6 +41,14 @@ const uint8_t clock_sysex[3] = {3, 14, 59};
 const uint8_t clock_sysex_2[2] = {99, 97};
 int spp = 0;
 
+void log() {
+  Serial.print(micros());
+  Serial.print(",");
+  Serial.print(pins[0]);
+  Serial.print(",");
+  Serial.println(pins[1]);
+}
+
 void setup() {
   // init buffer
   for (int i=0; i<RING; i++) {
@@ -68,8 +76,8 @@ void setup() {
   
   pinMode(26, INPUT_PULLDOWN);
   
-  //Serial.begin(9600);
-  //Serial.println("Booted.");
+  // Serial.begin(9600);
+  // Serial.println("timestamp,pin1,pin2");
   
   // flash LED to indicate startup
   pinMode(LED, OUTPUT);
@@ -233,12 +241,16 @@ void sendmidi() {
 
 // Interrupt routines
 void ISRrotAChange() {
+  // log();
   pins[0] = digitalRead(2);
+  // log();
   sendmidi();
 }
 
 void ISRrotBChange() {
+  // log();
   pins[1] = digitalRead(4);
+  // log();
   sendmidi();
 }
 
