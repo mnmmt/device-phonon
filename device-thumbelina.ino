@@ -31,7 +31,7 @@ int ringpos = 0;
 
 int pins[2] = {0, 0};
 int buttons[4] = {8, 10, 21, 19};
-int pulls[4] = {6, 12, 23, 16};
+int pulls[5] = {6, 12, 23, 16, 17};
 int selected = 0;
 int clock_ring[3] = {0, 0, 0};
 unsigned long clock_last = 0;
@@ -61,9 +61,12 @@ void setup() {
   digitalWrite(3, LOW);
 
   // button reference to low
-  for (int i=0; i<4; i++) {
+  for (int i=0; i<5; i++) {
     pinMode(pulls[i], OUTPUT);
     digitalWrite(pulls[i], LOW);
+  }
+  
+  for (int i=0; i<4; i++) {
     pinMode(buttons[i], INPUT_PULLUP);
   }
   
@@ -123,7 +126,7 @@ void loop() {
       	// reset the song position pointer
       	if (millis() > clock_last + 1250) {
       	  spp = 0;
-	}
+      	}
         //usbMIDI.sendRealTime(0xF2);
         //usbMIDI.sendRealTime(0xF8);
         //usbMIDI.sendRealTime(0xFD);
