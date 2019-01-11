@@ -35,6 +35,7 @@ int pulls[5] = {6, 12, 23, 16, 17};
 int selected = 0;
 int clock_ring[3] = {0, 0, 0};
 unsigned long clock_last = 0;
+unsigned long check = 0;
 int clock_in = 1;
 int clock_send = 0;
 const uint8_t clock_sysex[3] = {3, 14, 59};
@@ -91,15 +92,23 @@ void setup() {
 }
 
 void loop() {
+  if (check != 0 && millis() > check + 2) {
+    check = 0;
+    // log();
+    pins[0] = digitalRead(2);
+    pins[1] = digitalRead(4);
+    sendmidi();
+  }
+
   // update selected knob
   selected = (!digitalRead(buttons[0])) | ((!digitalRead(buttons[1])) << 1);
-  
+
   weighted[selected] += (val[selected] - weighted[selected]) / 8.0;
   if (last[selected] != round(weighted[selected])) {
     last[selected] = round(weighted[selected]);
     usbMIDI.sendControlChange(selected * 3, val[selected], MIDI_CHANNEL);
   }
-  
+
   // TODO: buttons can get stuck if "selected" and then pressed
   // and then "deselected" before release
   for (int i = 0; i < 4; i++) {
@@ -114,7 +123,7 @@ void loop() {
       }
     }
   }
-  
+
   // check analogue in for clock signal yeh
   if (clock_in == 1) {
     clock_ring[0] = clock_ring[1];
@@ -172,7 +181,7 @@ void loop() {
     clock_send -= 1;
   }
 
-  delay(1);
+  //delay(1);
   frame += 1;
 }
 
@@ -244,16 +253,10 @@ void sendmidi() {
 
 // Interrupt routines
 void ISRrotAChange() {
-  // log();
-  pins[0] = digitalRead(2);
-  // log();
-  sendmidi();
+  check = millis();
 }
 
 void ISRrotBChange() {
-  // log();
-  pins[1] = digitalRead(4);
-  // log();
-  sendmidi();
+  check = millis();
 }
 
