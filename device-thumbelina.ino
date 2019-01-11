@@ -10,24 +10,18 @@
 // * incoming midi for LED
 // * fix stuck buttons issue below
 
+// https://github.com/brianlow/Rotary
+#define HALF_STEP
+#include "Rotary.h"
+
 #define LED	13
 
 #define MIDI_CHANNEL 1
 
-// how many changes to collect
-#define RING 32
-// 5 milliseconds
-#define RECENT 5
-
 int frame = 0;
-int last[4] = {0, 0, 0, 0};
+unsigned long last = 0;
 int val[4] = {0, 0, 0, 0};
-float weighted[4] = {0.0, 0.0, 0.0, 0.0};
 int toggles[4] = {0, 0, 0, 0};
-
-int ringbuffer_v[RING];
-unsigned long ringbuffer_t[RING];
-int ringpos = 0;
 
 int pins[2] = {0, 0};
 int buttons[4] = {8, 10, 21, 19};
@@ -41,6 +35,7 @@ int clock_send = 0;
 const uint8_t clock_sysex[3] = {3, 14, 59};
 const uint8_t clock_sysex_2[2] = {99, 97};
 int spp = 0;
+Rotary r = Rotary(4, 2);
 
 void log() {
   Serial.print(micros());
@@ -51,13 +46,6 @@ void log() {
 }
 
 void setup() {
-  // init buffer
-  for (int i=0; i<RING; i++) {
-    ringbuffer_v[i] = 0;
-    ringbuffer_t[i] = 0;
-  }
-
-  //pinMode(3, OUTPUT_OPENDRAIN);
   pinMode(3, OUTPUT);
   digitalWrite(3, LOW);
 
@@ -71,12 +59,7 @@ void setup() {
     pinMode(buttons[i], INPUT_PULLUP);
   }
   
-  pinMode(2, INPUT_PULLUP);
-  pinMode(4, INPUT_PULLUP);
-  //pinMode(pushPin, INPUT);
-  
-  attachInterrupt(digitalPinToInterrupt(2), ISRrotAChange, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(4), ISRrotBChange, CHANGE);
+  r.begin();
   
   pinMode(26, INPUT_PULLDOWN);
   
@@ -92,20 +75,15 @@ void setup() {
 }
 
 void loop() {
-  if (check != 0 && millis() > check + 2) {
-    check = 0;
-    // log();
-    pins[0] = digitalRead(2);
-    pins[1] = digitalRead(4);
-    sendmidi();
-  }
-
   // update selected knob
   selected = (!digitalRead(buttons[0])) | ((!digitalRead(buttons[1])) << 1);
 
-  weighted[selected] += (val[selected] - weighted[selected]) / 8.0;
-  if (last[selected] != round(weighted[selected])) {
-    last[selected] = round(weighted[selected]);
+  unsigned char result = r.process();
+  if (result) {
+    // double speed accelerator
+    int m = (last > millis() - 5) ? 2 : 1;
+    last = millis();
+    val[selected] = constrain(val[selected] + (result == DIR_CW ? 1 : -1) * m, 0, 127);
     usbMIDI.sendControlChange(selected * 3, val[selected], MIDI_CHANNEL);
   }
 
@@ -182,81 +160,6 @@ void loop() {
   }
 
   //delay(1);
-  frame += 1;
-}
-
-int gray_decode(int n) {
-    int p = n;
-    while (n >>= 1) p ^= n;
-    return p;
-}
-
-int previous(int lookup) {
-  return (((lookup - 1) % RING) + RING) % RING;
-}
-
-int diff(int lookup) {
-  int v1 = ringbuffer_v[lookup];
-  int v2 = ringbuffer_v[previous(lookup)];
-  for (int i = 0; i<4; i++) {
-    if (v1 == i && v2 == ((i + 1) % 4)) {
-      return 1;
-    }
-    if (v2 == i && v1 == ((i + 1) % 4)) {
-      return -1;
-    }
-  }
-  return 0;
-}
-
-int compute_change(int lookup) {
-  unsigned long now = millis();
-  int c = diff(lookup);
-  int up = 0;
-  int down = 0;
-  for (int i=0; i<RING; i++) {
-    int timediff = now - ringbuffer_t[((lookup + i) % RING)];
-    // only consider recent changes
-    if (timediff < RECENT && timediff != 0) {
-      int o = diff(lookup);
-      if (o == 1) {
-        up++;
-      }
-      if (o == -1) {
-      	down++;
-      }
-    }
-  }
-  if (up || down) {
-    if (up > down) {
-      return 1;
-    }
-    if (up < down) {
-      return -1;
-    }
-  }
-  return c;
-}
-
-int updateval(int *pins) {
-  int lookup = ringpos % RING;
-  ringbuffer_v[lookup] = gray_decode(pins[0] | (pins[1] << 1));;
-  ringbuffer_t[lookup] = millis();
-  int change = compute_change(lookup);
-  ringpos++;
-  return change;
-}
-
-void sendmidi() {
-  val[selected] = constrain(val[selected] - updateval(pins), 0, 127);
-}
-
-// Interrupt routines
-void ISRrotAChange() {
-  check = millis();
-}
-
-void ISRrotBChange() {
-  check = millis();
+  //frame += 1;
 }
 
