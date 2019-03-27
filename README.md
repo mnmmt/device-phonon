@@ -1,1 +1,9 @@
-Tiny single-virtual-midi-knob controller for Teensy LC.
+Tiny midi controller.
+
+### Build & upload
+
+```shell
+git submodule init
+git submodule update
+make upload
+```
