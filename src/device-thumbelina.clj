@@ -3,10 +3,13 @@
 
 ;***** Constants *****;
 
-(def led 13)
 (def midi-channel 1)
-(def start-low (list 3 6 12 23 16 17))
-(def buttons (list 8 10 21 19))
+
+; pins
+(def pin-led 13)
+(def pins-start-low (list 3 6 12 23 16 17))
+(def pins-buttons (list 8 10 21 19))
+(def pin-cv-sync 26)
 
 ;***** Atoms *****;
 
@@ -21,17 +24,27 @@
 
 ;***** Setup *****;
 
-(gpio/pin-mode led :output)
+; pull pins low
+(doseq [p pins-start-low]
+  (gpio/pin-mode p :output)
+  (gpio/digital-write p :low))
 
-;(map (fn [p] (gpio/pin-mode p :output)) start-low)
+; pull buttons up
+(doseq [p pins-buttons]
+  (gpio/pin-mode p :input_pullup))
 
-(doseq [p start-low]
-  (do
-    ;(gpio/pin-mode p :output)
-    (gpio/digital-write p :low)))
+; kick off rotary encoder
 
-;(doseq [p buttons]
-;  (gpio/pin-mode p :input_pullup))
+; pull down cv-sync -> midi clock pin
+(gpio/pin-mode pin-cv-sync :input_pulldown)
+
+; set LED pin up for output
+(gpio/pin-mode pin-led :output)
+
+; flash LED to indicate successful start
+(doseq [t (range 7)]
+  (gpio/digital-write pin-led (mod (inc t) 2))
+  (sleep 125))
 
 ;***** Main *****;
 
