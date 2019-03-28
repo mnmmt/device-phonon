@@ -24,6 +24,9 @@
 
 ;***** Setup *****;
 
+(sleep 1000)
+
+(cxx "Serial.println(\"Hello\");")
 ; pull pins low
 (doseq [p pins-start-low]
   (gpio/pin-mode p :output)
