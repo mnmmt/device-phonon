@@ -1,5 +1,7 @@
 name=$(notdir $(shell pwd))
-aflags=--board teensy:avr:teensyLC --pref build.extra_flags="-D USB_MIDI" --pref custom_usb="teensyLC_midi"
+noserial= --pref build.extra_flags="-D USB_MIDI" --pref custom_usb="teensyLC_midi"
+serial=--pref build.extra_flags="-D USB_MIDI_SERIAL" --pref custom_usb="teensyLC_serialmidi"
+aflags=--board teensy:avr:teensyLC $(serial)
 
 build/$(name).ino: src/$(name).clj src/*.clj
 	mkdir -p $(name)
