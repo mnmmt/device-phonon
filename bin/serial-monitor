@@ -1,8 +1,3 @@
 #!/bin/sh
 
-while [ 1 ]
-do
-  busybox microcom -t 9600 /dev/ttyACM0
-  echo "re-starting serial monitor"
-  sleep 1
-done
+cat /dev/ttyACM0
