@@ -1,6 +1,9 @@
 (require '[ferret.arduino :as gpio]
          'usbmidi)
 
+(defn pin-pull-up [^number_t pin mode]
+  "::pinMode(pin, INPUT_PULLUP);")
+
 ;***** Constants *****;
 
 (def midi-channel 1)
@@ -26,7 +29,6 @@
 
 (sleep 1000)
 
-(cxx "Serial.println(\"Hello\");")
 ; pull pins low
 (doseq [p pins-start-low]
   (gpio/pin-mode p :output)
@@ -34,12 +36,12 @@
 
 ; pull buttons up
 (doseq [p pins-buttons]
-  (gpio/pin-mode p :input_pullup))
+  (pin-pull-up p))
 
 ; kick off rotary encoder
 
 ; pull down cv-sync -> midi clock pin
-(gpio/pin-mode pin-cv-sync :input_pulldown)
+(gpio/pin-mode pin-cv-sync :input)
 
 ; set LED pin up for output
 (gpio/pin-mode pin-led :output)
@@ -52,7 +54,11 @@
 ;***** Main *****;
 
 (forever
-  (toggle-pin 13)
-  (sleep 1000)
-  (usbmidi/sendControlChange 2 (swap! selected (fn [i] (mod (inc i) 127))) midi-channel))
+  (let [check-selected (bit-or (gpio/digital-read (nth pins-buttons 0))
+                               (bit-shift-left
+                                 (gpio/digital-read (nth pins-buttons 1)) 1))]
+    (when (not= @selected check-selected)
+      (println "Bang!" "\n")
+      (usbmidi/sendControlChange 2 check-selected midi-channel)
+      (reset! selected check-selected))))
 
