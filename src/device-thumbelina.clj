@@ -45,7 +45,7 @@
 ; pull pins low
 (doseq [p pins-start-low]
   (gpio/pin-mode p :output)
-  (gpio/digital-write p :low))
+  (gpio/digital-write p 0))
 
 ; pull buttons up
 (doseq [p pins-buttons]
