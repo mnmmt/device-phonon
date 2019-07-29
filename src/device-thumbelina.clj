@@ -13,9 +13,13 @@
               "auto isr_pin = digitalPinToInterrupt(number::to<int>(" isr-pin "));\n"
               "::attachInterrupt(isr_pin, [](){ run(" isr-fn ");}, " mode ");")))))
 
-
-(defn pin-pull-up [^number_t pin mode]
-  "::pinMode(pin, INPUT_PULLUP);")
+(defmacro pin-mode [pin mode]
+  (let [mode    (-> mode name .toUpperCase)
+        isr-pin (gensym)]
+    `(do
+       (def ~isr-pin ~pin)
+       (cxx
+        ~(str "::pinMode(number::to<int>(" isr-pin ") , " mode ");")))))
 
 ;***** Constants *****;
 
@@ -49,9 +53,9 @@
 
 ; pull buttons up
 (doseq [p pins-buttons]
-  (pin-pull-up p))
-
-; kick off rotary encoder
+  ; TODO: (gpio/pin-mode p :input_pullup)
+  ; [ once fix is in ferret ]
+  (pin-mode p :input_pullup))
 
 ; pull down cv-sync -> midi clock pin
 (gpio/pin-mode pin-cv-sync :input)
