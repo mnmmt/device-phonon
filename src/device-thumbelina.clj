@@ -83,7 +83,7 @@
                                (bit-shift-left
                                  (gpio/digital-read (nth pins-buttons 1)) 1))]
     (when (not= @selected check-selected)
-      (println "Bang!" "\n")
+      (println "Bang!" check-selected "\n")
       (usbmidi/sendControlChange 2 check-selected midi-channel)
       (reset! selected check-selected))))
 
