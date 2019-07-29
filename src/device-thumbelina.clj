@@ -1,6 +1,19 @@
 (require '[ferret.arduino :as gpio]
          'usbmidi)
 
+(defmacro attach-interrupt [pin mode callback]
+  (let [mode    (-> mode name .toUpperCase)
+        isr-fn  (gensym)
+        isr-pin (gensym)]
+    `(do
+       (def ~isr-fn  ~callback)
+       (def ~isr-pin ~pin)
+       (cxx
+        ~(str "::pinMode(number::to<int>(" isr-pin ") , INPUT_PULLUP);\n"
+              "auto isr_pin = digitalPinToInterrupt(number::to<int>(" isr-pin "));\n"
+              "::attachInterrupt(isr_pin, [](){ run(" isr-fn ");}, " mode ");")))))
+
+
 (defn pin-pull-up [^number_t pin mode]
   "::pinMode(pin, INPUT_PULLUP);")
 
@@ -52,6 +65,14 @@
   (sleep 125))
 
 ;***** Main *****;
+
+(defn rotary-interrupt []
+  (println "Interrupt! pins:" (list (gpio/digital-read 4) (gpio/digital-read 2))))
+
+; TODO: (gpio/attach-interrupt 4 :change rotary-interrupt)
+; [ once fix is in ferret ]
+(attach-interrupt 2 :change rotary-interrupt)
+(attach-interrupt 4 :change rotary-interrupt)
 
 (forever
   (let [check-selected (bit-or (gpio/digital-read (nth pins-buttons 0))
