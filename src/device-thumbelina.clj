@@ -2,26 +2,6 @@
          'rotary
          'usbmidi)
 
-(defmacro attach-interrupt [pin mode callback]
-  (let [mode    (-> mode name .toUpperCase)
-        isr-fn  (gensym)
-        isr-pin (gensym)]
-    `(do
-       (def ~isr-fn  ~callback)
-       (def ~isr-pin ~pin)
-       (cxx
-        ~(str "::pinMode(number::to<int>(" isr-pin ") , INPUT_PULLUP);\n"
-              "auto isr_pin = digitalPinToInterrupt(number::to<int>(" isr-pin "));\n"
-              "::attachInterrupt(isr_pin, [](){ run(" isr-fn ");}, " mode ");")))))
-
-(defmacro pin-mode [pin mode]
-  (let [mode    (-> mode name .toUpperCase)
-        isr-pin (gensym)]
-    `(do
-       (def ~isr-pin ~pin)
-       (cxx
-        ~(str "::pinMode(number::to<int>(" isr-pin ") , " mode ");")))))
-
 ;***** Constants *****;
 
 (def midi-channel 1)
