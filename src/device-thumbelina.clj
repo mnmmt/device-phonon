@@ -1,4 +1,5 @@
 (require '[ferret.arduino :as gpio]
+         'rotary
          'usbmidi)
 
 (defmacro attach-interrupt [pin mode callback]
@@ -70,8 +71,14 @@
 
 ;***** Main *****;
 
+(def encoder-state (atom 0))
+
 (defn rotary-interrupt []
-  (println "Interrupt! pins:" (list (gpio/digital-read 4) (gpio/digital-read 2))))
+  ; (println "Interrupt! pins:" (list (gpio/digital-read 4) (gpio/digital-read 2)))
+  (swap! encoder-state rotary/update-state 4 2)
+  (let [change (rotary/get-direction @encoder-state)]
+    (when (not= change 0)
+      (println change))))
 
 ; TODO: (gpio/attach-interrupt 4 :change rotary-interrupt)
 ; [ once fix is in ferret ]
