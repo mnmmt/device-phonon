@@ -16,6 +16,8 @@
 
 (def selected (atom 0))
 
+(def encoder-state (atom 0))
+
 ;***** Functions *****;
 
 (defn toggle-pin [pin]
@@ -24,8 +26,6 @@
        (gpio/digital-write pin)))
 
 ;***** Setup *****;
-
-(sleep 1000)
 
 ; pull pins low
 (doseq [p pins-start-low]
@@ -48,8 +48,6 @@
   (sleep 125))
 
 ;***** Main *****;
-
-(def encoder-state (atom 0))
 
 (defn rotary-interrupt []
   ; (println "Interrupt! pins:" (list (gpio/digital-read 4) (gpio/digital-read 2)))
