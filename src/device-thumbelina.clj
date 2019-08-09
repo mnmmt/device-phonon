@@ -54,9 +54,7 @@
 
 ; pull buttons up
 (doseq [p pins-buttons]
-  ; TODO: (gpio/pin-mode p :input_pullup)
-  ; [ once fix is in ferret ]
-  (pin-mode p :input_pullup))
+  (gpio/pin-mode p :input_pullup))
 
 ; pull down cv-sync -> midi clock pin
 (gpio/pin-mode pin-cv-sync :input)
@@ -80,10 +78,8 @@
     (when (not= change 0)
       (println change))))
 
-; TODO: (gpio/attach-interrupt 4 :change rotary-interrupt)
-; [ once fix is in ferret ]
-(attach-interrupt 2 :change rotary-interrupt)
-(attach-interrupt 4 :change rotary-interrupt)
+(gpio/attach-interrupt 2 :change rotary-interrupt)
+(gpio/attach-interrupt 4 :change rotary-interrupt)
 
 (forever
   (let [check-selected (bit-or (gpio/digital-read (nth pins-buttons 0))
