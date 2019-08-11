@@ -10,13 +10,16 @@
 (def pin-led 13)
 (def pins-start-low (list 3 6 12 23 16 17))
 (def pins-buttons (list 8 10 21 19))
+(def pins-encoder (list 4 2))
 (def pin-cv-sync 26)
 
 ;***** Atoms *****;
 
 (def selected (atom 0))
-
-(def encoder-state (atom 0))
+(def encoder-state-polled (atom 0))
+(def direction (atom 0))
+(def slider (atom {:last 0 :p 0 :v 0}))
+(def frame (atom 0))
 
 ;***** Functions *****;
 
@@ -47,24 +50,46 @@
   (gpio/digital-write pin-led (mod (inc t) 2))
   (sleep 125))
 
+; attach interrupt to encoder pins
+(doseq [p pins-encoder]
+  ; (gpio/pin-mode p :input_pullup)
+  (gpio/attach-interrupt p :change rotary/interrupt))
+
+(rotary/setup (first pins-encoder) (second pins-encoder))
+
 ;***** Main *****;
 
-(defn rotary-interrupt []
-  ; (println "Interrupt! pins:" (list (gpio/digital-read 4) (gpio/digital-read 2)))
-  (swap! encoder-state rotary/update-state 4 2)
-  (let [change (rotary/get-direction @encoder-state)]
-    (when (not= change 0)
-      (println change))))
-
-(gpio/attach-interrupt 2 :change rotary-interrupt)
-(gpio/attach-interrupt 4 :change rotary-interrupt)
+(defn send-slider [controller value]
+  (usbmidi/sendControlChange controller value midi-channel))
 
 (forever
-  (let [check-selected (bit-or (gpio/digital-read (nth pins-buttons 0))
-                               (bit-shift-left
-                                 (gpio/digital-read (nth pins-buttons 1)) 1))]
-    (when (not= @selected check-selected)
-      (println "Bang!" check-selected "\n")
-      (usbmidi/sendControlChange 2 check-selected midi-channel)
-      (reset! selected check-selected))))
+  ; check rotary encoder for changes
+  (let [cw (rotary/get-count-cw)
+        ccw (rotary/get-count-ccw)]
+    (when (or cw ccw)
+      (let [d (-> (rotary/get-interrupt-count)
+                  ; (min 127)
+                  (* (if cw 1 -1))
+                  (/ 2.0))
+            v (-> (@slider :v) (+ d) (min 127) (max 0))]
+        (swap! slider assoc :v v))))
 
+  ; send slider changes through via midi
+  (let [now (millis)
+        l (@slider :last)
+        p (@slider :p)
+        v (@slider :v)]
+    (when (and
+            (> (- now l) 10)
+            (not= p v))
+      (send-slider 3 v)
+      (swap! slider assoc :p v :last now)))
+
+  ; check buttons
+  (let [check-selected (- 3 (bit-or (gpio/digital-read (nth pins-buttons 0))
+                               (bit-shift-left
+                                 (gpio/digital-read (nth pins-buttons 1)) 1)))]
+    (when (not= @selected check-selected)
+      (println "Select button:" check-selected "\n")
+      ; (usbmidi/sendControlChange 2 check-selected midi-channel)
+      (reset! selected check-selected))))
