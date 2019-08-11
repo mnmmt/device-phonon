@@ -63,6 +63,12 @@
   (usbmidi/sendControlChange controller value midi-channel))
 
 (forever
+  ; TODO: write the new slider values to the right slider
+  ; TODO: send the knob button through to the right knob
+  ; TODO: send the spare button changes through
+  ; TODO: get cv sync values to SPP & flash light
+  ; TODO: send SPP to cv sync & flash light
+
   ; check rotary encoder for changes
   (let [cw (rotary/get-count-cw)
         ccw (rotary/get-count-ccw)]
@@ -93,3 +99,4 @@
       (println "Select button:" check-selected "\n")
       ; (usbmidi/sendControlChange 2 check-selected midi-channel)
       (reset! selected check-selected))))
+
