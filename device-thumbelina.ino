@@ -3,7 +3,6 @@
 // http://milkcrate.com.au/_other/downloads/arduino/Teensy_Rotary_Encoder.ino
 // Thanks Seb!
 
-// TODO: make secondary button single-channel
 // TODO: fix knob speed
 // TODO: incoming midi sets virtual knob position
 // TODO: fix stuck buttons issue
@@ -96,10 +95,12 @@ void loop() {
       toggles[i] = digitalRead(buttons[i]);
       // virtual knob selectors
       if (i < 2) {
-        //usbMIDI.sendControlChange(i + 12, (!toggles[i]) * 127, MIDI_CHANNEL);
-      } else {
+        // usbMIDI.sendControlChange(i + 12, (!toggles[i]) * 127, MIDI_CHANNEL);
+      } else if (i == 2) {
         // regular buttons ganged to selected
         usbMIDI.sendControlChange(selected + 4, (!toggles[i]) * 127, MIDI_CHANNEL);
+      } else if (i == 3) {
+        usbMIDI.sendControlChange(8, (!toggles[i]) * 127, MIDI_CHANNEL);
       }
     }
   }
