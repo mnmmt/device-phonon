@@ -3,12 +3,16 @@
 // http://milkcrate.com.au/_other/downloads/arduino/Teensy_Rotary_Encoder.ino
 // Thanks Seb!
 
-// TODO:
-// * pulses on pin 1 generate midi clock message (default)
-// * incoming midi clock reconfigures pin 14 and sends pulse
-// * incoming midi for knob values
-// * incoming midi for LED
-// * fix stuck buttons issue below
+// TODO: remove "select" midi ctl events (sysex?)
+// TODO: make secondary button single-channel
+// TODO: fix knob speed
+// TODO: put slider on 1-4 knob button on 4-8
+// TODO: incoming midi sets virtual knob position
+// TODO: fix stuck buttons issue
+
+// TODO: incoming midi sets LED
+// TODO: pulses on pin 1 generate midi clock message (default)
+// TODO: incoming midi clock reconfigures pin 14 and sends pulse
 
 // https://github.com/brianlow/Rotary
 #define HALF_STEP
