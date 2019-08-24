@@ -8,14 +8,14 @@
 // TODO: incoming midi sets virtual knob position
 // TODO: send "select" button midi sysex messages
 // TODO: incoming midi sets LED
-// TODO: pulses on pin 1 generate midi clock message (default)
-// TODO: incoming midi clock reconfigures pin 14 and sends pulse
+// TODO: when no SPP seen switch back to analogue input mode
 
 // https://github.com/brianlow/Rotary
 #define HALF_STEP
 #include "Rotary.h"
 
-#define LED	13
+#define PIN_LED 13
+#define PIN_SYNC 26
 
 #define MIDI_CHANNEL 1
 
@@ -63,15 +63,15 @@ void setup() {
   
   r.begin();
   
-  pinMode(26, INPUT_PULLDOWN);
+  pinMode(PIN_SYNC, INPUT_PULLDOWN);
   
   // Serial.begin(9600);
   // Serial.println("timestamp,pin1,pin2");
   
   // flash LED to indicate startup
-  pinMode(LED, OUTPUT);
+  pinMode(PIN_LED, OUTPUT);
   for (int i=0; i<6; i++) {
-    digitalWrite(LED, i % 2 ? HIGH : LOW);
+    digitalWrite(PIN_LED, i % 2 ? HIGH : LOW);
     delay(250);
   }
 }
@@ -80,6 +80,7 @@ void loop() {
   // update selected knob
   selected = (!digitalRead(buttons[0])) | ((!digitalRead(buttons[1])) << 1);
 
+  // check rotary encoder for changes
   unsigned char result = r.process();
   if (result) {
     // double speed accelerator
@@ -89,6 +90,7 @@ void loop() {
     usbMIDI.sendControlChange(selected, val[selected], MIDI_CHANNEL);
   }
 
+  // poll physical hardware buttons
   for (int i = 0; i < 4; i++) {
     int v = digitalRead(buttons[i]);
     if (toggles[i] != v) {
@@ -109,11 +111,11 @@ void loop() {
     }
   }
 
-  // check analogue in for clock signal yeh
+  // check analogue in for cv sync signal
   if (clock_in == 1) {
     clock_ring[0] = clock_ring[1];
     clock_ring[1] = clock_ring[2];
-    clock_ring[2] = analogRead(26) > 256;
+    clock_ring[2] = analogRead(PIN_SYNC) > 256;
     if (clock_ring[0] == 0 && clock_ring[1] == 1 && clock_ring[2] == 1) {
       if (millis() > clock_last + 25) {
       	// if incoming ticks have been off for a second
@@ -135,6 +137,7 @@ void loop() {
     }
   }
 
+  // check for incoming midi messages
   if (usbMIDI.read()) {
     int type = usbMIDI.getType();
     //int channel = usbMIDI.getChannel();
@@ -142,26 +145,24 @@ void loop() {
       // 8 = all realtime clock messages
       // 0xF8 = usbMIDI.Clock
       if (type == usbMIDI.SongPosition) {
-        digitalWrite(LED, 1);
+        digitalWrite(PIN_LED, 1);
         if (clock_in) {
           clock_in = 0;
-          pinMode(26, OUTPUT);
+          pinMode(PIN_SYNC, OUTPUT);
         }
         clock_send = 4;
       }
     //}
   } else {
-    digitalWrite(LED, 0);
+    digitalWrite(PIN_LED, 0);
   }
 
   // check for clock sends
   if (clock_in == 0 && clock_send) {
     if (clock_send > 1) {
-      digitalWrite(26, 1);
-      //analogWrite(26, 255);
+      digitalWrite(PIN_SYNC, 1);
     } else {
-      digitalWrite(26, 0);
-      //analogWrite(26, 0);
+      digitalWrite(PIN_SYNC, 0);
     }
     clock_send -= 1;
   }
