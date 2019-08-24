@@ -4,9 +4,8 @@
 // Thanks Seb!
 
 // TODO: fix knob speed
-// TODO: incoming midi sets virtual knob position
-// TODO: fix stuck buttons issue
 
+// TODO: incoming midi sets virtual knob position
 // TODO: send "select" button midi sysex messages
 // TODO: incoming midi sets LED
 // TODO: pulses on pin 1 generate midi clock message (default)
@@ -23,6 +22,7 @@
 int frame = 0;
 unsigned long last = 0;
 int val[4] = {0, 0, 0, 0};
+int btn[4] = {0, 0, 0, 0};
 int toggles[4] = {0, 0, 0, 0};
 
 int pins[2] = {0, 0};
@@ -89,19 +89,21 @@ void loop() {
     usbMIDI.sendControlChange(selected, val[selected], MIDI_CHANNEL);
   }
 
-  // TODO: buttons can get stuck if "selected" and then pressed
-  // and then "deselected" before release
   for (int i = 0; i < 4; i++) {
     int v = digitalRead(buttons[i]);
     if (toggles[i] != v) {
       toggles[i] = v;
       // virtual knob selectors
       if (i < 2) {
-        // usbMIDI.sendControlChange(i + 12, (!toggles[i]) * 127, MIDI_CHANNEL);
+        // TODO: send sysex message about "select" button mode
+        for (int j = 0; j < 4; j++) {
+          updatebtn(j, 0);
+	}
       } else if (i == 2) {
         // regular buttons ganged to selected
-        usbMIDI.sendControlChange(selected + 4, (!toggles[i]) * 127, MIDI_CHANNEL);
+        updatebtn(selected, (!toggles[2]) * 127);
       } else if (i == 3) {
+        // independent trigger button
         usbMIDI.sendControlChange(8, (!toggles[i]) * 127, MIDI_CHANNEL);
       }
     }
@@ -168,3 +170,9 @@ void loop() {
   //frame += 1;
 }
 
+void updatebtn(int i, int newbtn) {
+  if (btn[i] != newbtn) {
+    usbMIDI.sendControlChange(i + 4, newbtn, MIDI_CHANNEL);
+    btn[i] = newbtn;
+  }
+}
