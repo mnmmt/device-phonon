@@ -5,7 +5,6 @@
 
 // TODO: make secondary button single-channel
 // TODO: fix knob speed
-// TODO: put slider on 1-4 knob button on 4-8
 // TODO: incoming midi sets virtual knob position
 // TODO: fix stuck buttons issue
 
@@ -87,7 +86,7 @@ void loop() {
     int m = (last > millis() - 5) ? 2 : 1;
     last = millis();
     val[selected] = constrain(val[selected] + (result == DIR_CW ? 1 : -1) * m, 0, 127);
-    usbMIDI.sendControlChange(selected * 3, val[selected], MIDI_CHANNEL);
+    usbMIDI.sendControlChange(selected, val[selected], MIDI_CHANNEL);
   }
 
   // TODO: buttons can get stuck if "selected" and then pressed
@@ -100,7 +99,7 @@ void loop() {
         //usbMIDI.sendControlChange(i + 12, (!toggles[i]) * 127, MIDI_CHANNEL);
       } else {
         // regular buttons ganged to selected
-        usbMIDI.sendControlChange(selected * 3 + i - 1, (!toggles[i]) * 127, MIDI_CHANNEL);
+        usbMIDI.sendControlChange(selected + 4, (!toggles[i]) * 127, MIDI_CHANNEL);
       }
     }
   }
