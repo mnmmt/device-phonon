@@ -7,6 +7,7 @@
 // TODO: incoming midi sets virtual knob position
 // TODO: fix stuck buttons issue
 
+// TODO: send "select" button midi sysex messages
 // TODO: incoming midi sets LED
 // TODO: pulses on pin 1 generate midi clock message (default)
 // TODO: incoming midi clock reconfigures pin 14 and sends pulse
@@ -91,8 +92,9 @@ void loop() {
   // TODO: buttons can get stuck if "selected" and then pressed
   // and then "deselected" before release
   for (int i = 0; i < 4; i++) {
-    if (toggles[i] != digitalRead(buttons[i])) {
-      toggles[i] = digitalRead(buttons[i]);
+    int v = digitalRead(buttons[i]);
+    if (toggles[i] != v) {
+      toggles[i] = v;
       // virtual knob selectors
       if (i < 2) {
         // usbMIDI.sendControlChange(i + 12, (!toggles[i]) * 127, MIDI_CHANNEL);
