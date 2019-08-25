@@ -1,3 +1,4 @@
 #!/bin/sh
 
-arduino --upload *.ino
+# NOSERIAL: --pref build.extra_flags="-D USB_MIDI" --pref custom_usb="teensyLC_midi"
+arduino --board teensy:avr:teensyLC --pref build.extra_flags="-D USB_MIDI_SERIAL" --pref custom_usb="teensyLC_serialmidi" --upload device-thumbelina.ino
