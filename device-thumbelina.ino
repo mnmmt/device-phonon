@@ -138,13 +138,13 @@ void loop() {
   }
 
   // check for incoming midi messages
-  if (usbMIDI.read()) {
+  if (usbMIDI.read(MIDI_CHANNEL)) {
     int type = usbMIDI.getType();
     //int channel = usbMIDI.getChannel();
     //if (channel == MIDI_CHANNEL) {
       // 8 = all realtime clock messages
       // 0xF8 = usbMIDI.Clock
-      if (type == usbMIDI.SongPosition) {
+      if (type == usbMIDI.SongPosition || (type == usbMIDI.ControlChange && usbMIDI.getData1() == 127)) {
         digitalWrite(PIN_LED, 1);
         if (clock_in) {
           clock_in = 0;
