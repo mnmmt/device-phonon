@@ -11,8 +11,8 @@
 // TODO: when no SPP seen switch back to analogue input mode
 
 // https://github.com/brianlow/Rotary
-#define HALF_STEP
-#include "Rotary.h"
+#include "rotary.h"
+#include <TimerOne.h>
 
 #define PIN_LED 13
 #define PIN_SYNC 26
@@ -74,21 +74,67 @@ void setup() {
     digitalWrite(PIN_LED, i % 2 ? HIGH : LOW);
     delay(250);
   }
+
+  Timer1.initialize(50);
+  Timer1.attachInterrupt(encoder_fast_poll);
+  attachInterrupt(digitalPinToInterrupt(2), encoder_pin_interrupt, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(4), encoder_pin_interrupt, CHANGE);
+}
+
+int encoder_interrupt_accum = 0;
+int encoder_interrupt_accum_smoothed = 0;
+
+int encoder_change = 0;
+unsigned char encoder_direction = 0;
+int encoder_direction_prev = 0;
+unsigned long encoder_last_interrupt = 0;
+
+void encoder_fast_poll() {
+  if (encoder_last_interrupt && ((micros() - encoder_last_interrupt) > 200)) {
+    encoder_last_interrupt = 0;
+    encoder_direction = r.process();
+    if (encoder_direction) {
+      encoder_direction_prev = (encoder_direction == DIR_CW ? 1 : -1);
+      encoder_change += encoder_direction_prev;
+    }
+  }
+}
+
+void encoder_pin_interrupt() {
+  encoder_interrupt_accum += 1;
+  encoder_last_interrupt = micros();
 }
 
 void loop() {
-  // update selected knob
-  selected = (!digitalRead(buttons[0])) | ((!digitalRead(buttons[1])) << 1);
+  delay(1);
+  encoder_interrupt_accum_smoothed += (encoder_interrupt_accum - encoder_interrupt_accum_smoothed) >> 6;
+  usbMIDI.sendPitchBend(encoder_direction_prev, 1);
+  usbMIDI.sendPitchBend(encoder_interrupt_accum_smoothed, 2);
+  //usbMIDI.sendPitchBend(encoder_direction_prev, 2);
+  //usbMIDI.sendPitchBend(encoder_change_cw, 1);
+  //encoder_change_cw = 0;
+  //usbMIDI.sendPitchBend(encoder_change_ccw, 2);
+  //encoder_change_ccw = 0;
+
+  int quant = (int)(encoder_interrupt_accum / 128);
+  encoder_interrupt_accum = 0;
+
+  if (quant) {
+    //val[selected] = constrain(val[selected] + quant * (encoder_direction_prev == DIR_CW ? 1 : -1), 0, 127);
+    //usbMIDI.sendControlChange(selected, val[selected], MIDI_CHANNEL);
+  }
 
   // check rotary encoder for changes
-  unsigned char result = r.process();
-  if (result) {
-    // double speed accelerator
-    int m = (last > millis() - 5) ? 2 : 1;
-    last = millis();
-    val[selected] = constrain(val[selected] + (result == DIR_CW ? 1 : -1) * m, 0, 127);
+  if (encoder_change) {
+    val[selected] = constrain(val[selected] + encoder_change, 0, 127);
+    //encoder_direction_prev = encoder_direction;
+    //val[selected] = constrain(val[selected] + (encoder_change_cw + encoder_change_ccw) * (encoder_change / abs(encoder_change)), 0, 127);
     usbMIDI.sendControlChange(selected, val[selected], MIDI_CHANNEL);
+    encoder_change = 0;
   }
+
+  // update selected knob
+  selected = (!digitalRead(buttons[0])) | ((!digitalRead(buttons[1])) << 1);
 
   // poll physical hardware buttons
   for (int i = 0; i < 4; i++) {
