@@ -22,6 +22,7 @@
 int frame = 0;
 unsigned long last = 0;
 int val[4] = {0, 0, 0, 0};
+int val_last_sent[4] = {0, 0, 0, 0};
 int btn[4] = {0, 0, 0, 0};
 int toggles[4] = {0, 0, 0, 0};
 
@@ -129,8 +130,16 @@ void loop() {
     val[selected] = constrain(val[selected] + encoder_change, 0, 127);
     //encoder_direction_prev = encoder_direction;
     //val[selected] = constrain(val[selected] + (encoder_change_cw + encoder_change_ccw) * (encoder_change / abs(encoder_change)), 0, 127);
-    usbMIDI.sendControlChange(selected, val[selected], MIDI_CHANNEL);
+    //usbMIDI.sendControlChange(selected, val[selected], MIDI_CHANNEL);
     encoder_change = 0;
+
+  // send through updates to virtual sliders, if any
+  for (int i=0; i < 4; i++) {
+    if ((val_last_sent[i] != val[i]) && ((millis() - last) > 10)) {
+      val_last_sent[i] = val[i];
+      usbMIDI.sendControlChange(i, val[i], MIDI_CHANNEL);
+      last = millis();
+    }
   }
 
   // update selected knob
