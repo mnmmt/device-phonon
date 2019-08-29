@@ -21,8 +21,8 @@
 
 int frame = 0;
 unsigned long last = 0;
-int val[4] = {0, 0, 0, 0};
-int val_last_sent[4] = {0, 0, 0, 0};
+float val[4] = {0, 0, 0, 0};
+float val_last_sent[4] = {0, 0, 0, 0};
 int btn[4] = {0, 0, 0, 0};
 int toggles[4] = {0, 0, 0, 0};
 
@@ -109,21 +109,13 @@ void encoder_pin_interrupt() {
 void loop() {
   delay(1);
   encoder_interrupt_accum_smoothed += (encoder_interrupt_accum - encoder_interrupt_accum_smoothed) >> 6;
-  usbMIDI.sendPitchBend(encoder_direction_prev, 1);
-  usbMIDI.sendPitchBend(encoder_interrupt_accum_smoothed, 2);
+  //usbMIDI.sendPitchBend(encoder_direction_prev, 1);
+  //usbMIDI.sendPitchBend(encoder_interrupt_accum_smoothed, 2);
   //usbMIDI.sendPitchBend(encoder_direction_prev, 2);
   //usbMIDI.sendPitchBend(encoder_change_cw, 1);
   //encoder_change_cw = 0;
   //usbMIDI.sendPitchBend(encoder_change_ccw, 2);
   //encoder_change_ccw = 0;
-
-  int quant = (int)(encoder_interrupt_accum / 128);
-  encoder_interrupt_accum = 0;
-
-  if (quant) {
-    //val[selected] = constrain(val[selected] + quant * (encoder_direction_prev == DIR_CW ? 1 : -1), 0, 127);
-    //usbMIDI.sendControlChange(selected, val[selected], MIDI_CHANNEL);
-  }
 
   // check rotary encoder for changes
   if (encoder_change) {
@@ -132,6 +124,13 @@ void loop() {
     //val[selected] = constrain(val[selected] + (encoder_change_cw + encoder_change_ccw) * (encoder_change / abs(encoder_change)), 0, 127);
     //usbMIDI.sendControlChange(selected, val[selected], MIDI_CHANNEL);
     encoder_change = 0;
+  }
+
+  if (encoder_interrupt_accum_smoothed) {
+    val[selected] = constrain(val[selected] + (encoder_direction_prev * encoder_interrupt_accum_smoothed) * 0.0125, 0, 127);
+  }
+
+  encoder_interrupt_accum = 0;
 
   // send through updates to virtual sliders, if any
   for (int i=0; i < 4; i++) {
