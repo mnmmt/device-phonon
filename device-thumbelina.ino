@@ -127,7 +127,7 @@ void loop() {
   }
 
   if (encoder_interrupt_accum_smoothed) {
-    val[selected] = constrain(val[selected] + (encoder_direction_prev * encoder_interrupt_accum_smoothed) * 0.0125, 0, 127);
+    val[selected] = constrain(val[selected] + (encoder_direction_prev * encoder_interrupt_accum_smoothed) * 0.0025, 0, 127);
   }
 
   encoder_interrupt_accum = 0;
